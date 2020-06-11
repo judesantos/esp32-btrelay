@@ -60,37 +60,53 @@ void pairingComplete()
 }
 
 /**
- * multi-tasking (2nd core) process workhorse 
+ * multi-tasking (2nd core) process 
  * 
  */
 void sensorLoop(void *params) 
 {
+  /**************************************************************************
+   * 
+   * Wait for user commands - touch duration actions
+   * 
+   *  1. pair mode - authenticate and add new device (3 seconds).
+   *  2. connect mode/cancel pair mode - connect paired devices (3 seconds).
+   *  3. system restart (10 seconds).
+   *  
+   **************************************************************************/ 
   // interval before next sensor read.
   const uint16_t touchReadIntervalMs = 1000;
-  // initiate system restart when user holds for 10 of touchReadIntervalMs seconds
+  // initiate system restart when touch held for 9 of touchReadIntervalMs seconds
   const uint16_t restartSwitchThMs = 10 * touchReadIntervalMs;
-  // toggle Bluetooth pairing mode when sensor held for 4 of touchReadIntervalMs seconds
-  const uint16_t initiateBTDevicePairingThMs = 4 * touchReadIntervalMs;
-  // max touch period before canceling pairing request - if user did not release touch 
-  // after the period expires, switch to pair mode will be cancelled
-  const uint16_t maxWaitTouchReleasePairingRequestMs = 7 * touchReadIntervalMs;
-  // touch value upper treshold 
+  // set flag to switch/cancel bluetooth pairing mode when touch is 
+  // held for 3 of touchReadIntervalMs seconds
+  const uint16_t initiateBTDevicePairingThMs = 3 * touchReadIntervalMs;
+  // max touch period before ignoring the pairing request.
+  const uint16_t maxWaitTouchReleasePairingRequestMs = 6 * touchReadIntervalMs;
+  // touch capacitance level treshold - trigger action if value goes lower than touchTreshold
   const uint8_t touchTreshold = 15;
   // length of continued touch
   uint16_t touchElapsedMs = 0;
-  // toggle pairing mode
+  // Toggle pairing mode - we got a previous warning to start/stop pairing mode. 
+  // When initiateBTDevicePairingThMs is TRUE, cycle some more waiting for user 
+  // to release touch and start/cancel pairing.
+  // if set to TRUE, user released touch and confirms recent requested action.
+  // Cancel pairing occurs when pairing mode is in effect.
+  // If user does not release touch after the specified max duration - 
+  // maxWaitTouchReleasePairingRequestMs, no action is taken and timer is reset
+  // to wait for next command, if any.
   bool initiatePairingMode = false;
-  
-  while(1)
+  // wait for commands
+  while(true)
   {
     float sensorValue = 0;
-    // monitor touch sensor Touch5 at GPIO12, Pin12
+    // sampling rate at 100x
     for (int x = 0; x < 100; x++) {
+      // read sensor value of Touch5 (GPIO12, Pin12)
       sensorValue += touchRead(T5);
     }
     sensorValue /= 100;
     Serial.printf("\ntouch sense (T5) value: %00.2f", sensorValue); 
-
     if (sensorValue < touchTreshold) 
     {
       if (restartSwitchThMs <= touchElapsedMs) 
@@ -122,7 +138,9 @@ void sensorLoop(void *params)
       }      
       // continue to next cycle
       touchElapsedMs += touchReadIntervalMs;     
-    } else {
+    } 
+    else 
+    {
       touchElapsedMs = 0;
       if (initiatePairingMode) {
         initiatePairingMode = false;
@@ -130,32 +148,28 @@ void sensorLoop(void *params)
         initializeHID(pairingInProgress ? false : true); 
       }
     }
-   
+    // sleep touchReadIntervalMs seconds
     delay(touchReadIntervalMs);
+    // awake! Get next value...
   }
 }
 
 void setup() 
 {
   Serial.begin(115200);
-  
   // multi-task other services
   xTaskCreatePinnedToCore(sensorLoop, "sensorTask", 6144, NULL, 1, NULL, ARDUINO_RUNNING_CORE);
-
   // start USB
   if (Usb.Init() == -1) {
     Serial.print(F("\r\nOSC did not start"));
     while (1); // Halt
   }
-  
   initializeHID(); // connect mode
-  
   Serial.print(F("\r\nHID Bluetooth Library Started"));
 }
 
 void loop() 
 {
   Usb.Task();
-  
-  delay(100);
+  delay(1);
 }
