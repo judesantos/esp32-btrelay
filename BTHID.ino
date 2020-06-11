@@ -95,7 +95,7 @@ void sensorLoop(void *params)
   // If user does not release touch after the specified max duration - 
   // maxWaitTouchReleasePairingRequestMs, no action is taken and timer is reset
   // to wait for next command, if any.
-  bool initiatePairingMode = false;
+  bool togglePairingMode = false;
   // wait for commands
   while(true)
   {
@@ -105,10 +105,11 @@ void sensorLoop(void *params)
       // read sensor value of Touch5 (GPIO12, Pin12)
       sensorValue += touchRead(T5);
     }
-    sensorValue /= 100;
-    Serial.printf("\ntouch sense (T5) value: %00.2f", sensorValue); 
+    sensorValue /= 100; // extract average value.
+    // check if touch is active
     if (sensorValue < touchTreshold) 
     {
+      Serial.printf("\nTouch (T5) active! Value: %00.2f", sensorValue); 
       if (restartSwitchThMs <= touchElapsedMs) 
       {
         // restart device
@@ -122,16 +123,17 @@ void sensorLoop(void *params)
         initiateBTDevicePairingThMs <= touchElapsedMs && 
         maxWaitTouchReleasePairingRequestMs >= touchElapsedMs
       ) {
-        if (!initiatePairingMode) {
-          Serial.printf("\nPairing mode %s", pairingInProgress ? "'cancel'" : "'enable'");
-          initiatePairingMode = true;
+        // Check if user wants to switch bluetooth mode.
+        if (!togglePairingMode) {
+          Serial.printf("\nPairing mode %s", pairingInProgress ? "'cancel'" : "'activate'");
+          togglePairingMode = true;
         } else {
-          // cancel if user did not release touch for another 3 seconds.
+          // cancel if user did not release touch after 3 seconds.
           // user is possibly initiating reboot.
-          if (touchReadIntervalMs * 7 == touchElapsedMs) {
-            if (initiatePairingMode) {
-              Serial.println("\nPairing mode canceled");
-              initiatePairingMode = false;
+          if (maxWaitTouchReleasePairingRequestMs == touchElapsedMs) {
+            if (togglePairingMode) {
+              Serial.println("\nTouch period elapsed. Ignoring pair-mode request.");
+              togglePairingMode = false;
             }           
           }
         }
@@ -141,10 +143,12 @@ void sensorLoop(void *params)
     } 
     else 
     {
-      touchElapsedMs = 0;
-      if (initiatePairingMode) {
-        initiatePairingMode = false;
-        // toggle pairing mode
+      // touch not active.
+      touchElapsedMs = 0; 
+      // When togglePairingMode is set to TRUE, user action is confirmed.
+      if (togglePairingMode) {
+         togglePairingMode = false;
+        // fulfill action
         initializeHID(pairingInProgress ? false : true); 
       }
     }
