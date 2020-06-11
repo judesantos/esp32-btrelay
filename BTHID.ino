@@ -76,12 +76,12 @@ void sensorLoop(void *params)
    **************************************************************************/ 
   // interval before next sensor read.
   const uint16_t touchReadIntervalMs = 1000;
-  // initiate system restart when touch held for 9 of touchReadIntervalMs seconds
-  const uint16_t restartSwitchThMs = 10 * touchReadIntervalMs;
+  // initiate system restart when touch held for 10 of touchReadIntervalMs seconds
+  const uint16_t restartSwitchThMs = 9 * touchReadIntervalMs;
   // set flag to switch/cancel bluetooth pairing mode when touch is 
-  // held for 3 of touchReadIntervalMs seconds
+  // held for 4 of touchReadIntervalMs seconds
   const uint16_t initiateBTDevicePairingThMs = 3 * touchReadIntervalMs;
-  // max touch period before ignoring the pairing request.
+  // max touch period before ignoring the pairing request - 7 seconds.
   const uint16_t maxWaitTouchReleasePairingRequestMs = 6 * touchReadIntervalMs;
   // touch capacitance level treshold - trigger action if value goes lower than touchTreshold
   const uint8_t touchTreshold = 15;
