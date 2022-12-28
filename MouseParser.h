@@ -2,7 +2,8 @@
 #define __mouserptparser_h__
 
 class MouseRptParser : public MouseReportParser {
-  protected:
+protected:
+
     virtual void OnMouseMove(MOUSEINFO *mi);
     virtual void OnLeftButtonUp(MOUSEINFO *mi);
     virtual void OnLeftButtonDown(MOUSEINFO *mi);

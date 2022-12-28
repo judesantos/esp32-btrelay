@@ -2,15 +2,15 @@
 #define __kbdrptparser_h_
 
 class KbdRptParser : public KeyboardReportParser {
-  protected:
-    virtual uint8_t HandleLockingKeys(USBHID *hid, uint8_t key);
-    virtual void OnControlKeysChanged(uint8_t before, uint8_t after);
-    virtual void OnKeyDown(uint8_t mod, uint8_t key);
-    virtual void OnKeyUp(uint8_t mod, uint8_t key);
-    virtual void OnKeyPressed(uint8_t key);
+protected:
+  virtual uint8_t HandleLockingKeys(USBHID *hid, uint8_t key);
+  virtual void OnControlKeysChanged(uint8_t before, uint8_t after);
+  virtual void OnKeyDown(uint8_t mod, uint8_t key);
+  virtual void OnKeyUp(uint8_t mod, uint8_t key);
+  virtual void OnKeyPressed(uint8_t key);
 
-  private:
-    void PrintKey(uint8_t mod, uint8_t key);
+private:
+  void PrintKey(uint8_t mod, uint8_t key);
 };
 
 uint8_t KbdRptParser::HandleLockingKeys(USBHID *hid, uint8_t key) {

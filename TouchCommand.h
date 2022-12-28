@@ -22,6 +22,7 @@ typedef struct {
 
 class TouchCommand {
 public:
+
   TouchCommand(
     void (*fnCb)(command_t *pCmd),
     uint8_t sensorPinId,
@@ -140,6 +141,7 @@ public:
   }
 
 private:
+
   void (*m_fnCbTriggered)(command_t *cmd);
 
   uint8_t m_sensorPinId;
@@ -150,6 +152,7 @@ private:
 
   size_t m_commandLen;
   command_t *m_commands[MAX_COMMANDS];
+
 };
 
 #endif // yt_touch_command_H_
